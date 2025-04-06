@@ -78,3 +78,4 @@ developer pushes commits
 ```
 
 If the **Merge Queue Check** (C) fails after the PR has been enqueued, GitHub automatically removes the PR from the queue and the merge is blocked until the issue is resolved.
+
