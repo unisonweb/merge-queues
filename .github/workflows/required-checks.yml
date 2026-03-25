@@ -1,0 +1,68 @@
+name: Required Checks
+
+# This workflow demonstrates required checks at three stages of the merge lifecycle:
+#
+#   (A) push        — runs whenever commits are pushed to any branch.
+#                     Configure as a required status check on the base branch so that
+#                     a branch must pass this check before a PR can be enqueued.
+#
+#   (B) pull_request — runs when a PR is opened or updated.
+#                     Configure as a required status check on the base branch so that
+#                     the PR must pass this check before it can be enqueued.
+#
+#   (C) merge_group  — runs after a PR enters the merge queue, but before it is
+#                     merged.  If this check fails the PR is dequeued and the merge
+#                     is blocked.
+
+on:
+  push:
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  # -----------------------------------------------------------------------
+  # (A) Push check
+  # Runs on every push.  Add "Push Check" as a required status check in your
+  # branch-protection rule to block enqueuing until this check passes.
+  # -----------------------------------------------------------------------
+  push-check:
+    name: Push Check
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run push check
+        run: echo "Push check passed for ${{ github.ref }}"
+
+  # -----------------------------------------------------------------------
+  # (B) Pull-request check
+  # Runs when a PR is opened or updated.  Add "PR Check" as a required status
+  # check in your branch-protection rule to block enqueuing until this passes.
+  # -----------------------------------------------------------------------
+  pr-check:
+    name: PR Check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run PR check
+        run: echo "PR check passed for PR #${{ github.event.pull_request.number }}"
+
+  # -----------------------------------------------------------------------
+  # (C) Merge-queue check
+  # Runs after the PR is added to the merge queue (merge_group event).
+  # Add "Merge Queue Check" as a required merge-queue check in your
+  # branch-protection rule.  If this check fails the PR is removed from the
+  # queue and the merge is blocked.
+  # -----------------------------------------------------------------------
+  merge-queue-check:
+    name: Merge Queue Check
+    if: github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run merge-queue check
+        run: echo "Merge queue check passed for ${{ github.ref }}"
