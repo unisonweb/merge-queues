@@ -25,6 +25,7 @@ permissions:
 jobs:
   # -----------------------------------------------------------------------
   # (A) Push check
+  # Passes when bit 0 of the last hex nibble of the commit SHA is 0.
   # Runs on every push.  Add "Push Check" as a required status check in your
   # branch-protection rule to block enqueuing until this check passes.
   # -----------------------------------------------------------------------
@@ -35,10 +36,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run push check
-        run: echo "Push check passed for ${{ github.ref }}"
+        run: |
+          SHA="${{ github.sha }}"
+          LAST="${SHA: -1}"
+          BIT=$(( 16#$LAST & 1 ))
+          echo "SHA=$SHA  last_nibble=$LAST  bit_0=$BIT"
+          if [ "$BIT" -eq 0 ]; then
+            echo "Push check passed"
+          else
+            echo "Push check failed (bit 0 of last SHA nibble is 1)"
+            exit 1
+          fi
 
   # -----------------------------------------------------------------------
   # (B) Pull-request check
+  # Passes when bit 1 of the last hex nibble of the commit SHA is 0.
   # Runs when a PR is opened or updated.  Add "PR Check" as a required status
   # check in your branch-protection rule to block enqueuing until this passes.
   # -----------------------------------------------------------------------
@@ -49,10 +61,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run PR check
-        run: echo "PR check passed for PR #${{ github.event.pull_request.number }}"
+        run: |
+          SHA="${{ github.sha }}"
+          LAST="${SHA: -1}"
+          BIT=$(( 16#$LAST & 2 ))
+          echo "SHA=$SHA  last_nibble=$LAST  bit_1=$BIT"
+          if [ "$BIT" -eq 0 ]; then
+            echo "PR check passed"
+          else
+            echo "PR check failed (bit 1 of last SHA nibble is 1)"
+            exit 1
+          fi
 
   # -----------------------------------------------------------------------
   # (C) Merge-queue check
+  # Passes when bit 2 of the last hex nibble of the commit SHA is 0.
   # Runs after the PR is added to the merge queue (merge_group event).
   # Add "Merge Queue Check" as a required merge-queue check in your
   # branch-protection rule.  If this check fails the PR is removed from the
@@ -65,4 +88,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run merge-queue check
-        run: echo "Merge queue check passed for ${{ github.ref }}"
+        run: |
+          SHA="${{ github.sha }}"
+          LAST="${SHA: -1}"
+          BIT=$(( 16#$LAST & 4 ))
+          echo "SHA=$SHA  last_nibble=$LAST  bit_2=$BIT"
+          if [ "$BIT" -eq 0 ]; then
+            echo "Merge queue check passed"
+          else
+            echo "Merge queue check failed (bit 2 of last SHA nibble is 1)"
+            exit 1
+          fi

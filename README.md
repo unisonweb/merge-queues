@@ -8,13 +8,38 @@ This repository demonstrates how to use [GitHub Merge Queues](https://docs.githu
 
 ## The three check stages
 
-| Stage | Event trigger | Job name | When it runs |
+| Stage | Event trigger | Job name | Passes when… |
 |-------|--------------|----------|--------------|
-| **(A) Push check** | `push` | `Push Check` | Every time commits are pushed to any branch |
-| **(B) PR check** | `pull_request` | `PR Check` | When a pull request is opened or updated |
-| **(C) Merge-queue check** | `merge_group` | `Merge Queue Check` | After a PR enters the merge queue, before it is merged |
+| **(A) Push check** | `push` | `Push Check` | bit 0 of the last SHA nibble is **0** |
+| **(B) PR check** | `pull_request` | `PR Check` | bit 1 of the last SHA nibble is **0** |
+| **(C) Merge-queue check** | `merge_group` | `Merge Queue Check` | bit 2 of the last SHA nibble is **0** |
 
 All three jobs live in [`.github/workflows/required-checks.yml`](.github/workflows/required-checks.yml).
+
+Each check inspects a different bit of the last hexadecimal character of the commit SHA (`github.sha`), giving each check an independent ~50% chance of passing or failing on any given commit.  This lets you easily simulate mixed pass/fail outcomes across the three stages without needing to touch any source code.
+
+### Pass/fail lookup table
+
+The last nibble of a SHA can be `0`–`f`.  The table below shows which checks pass (`✓`) or fail (`✗`) for each value:
+
+| Last nibble | bit 2 | bit 1 | bit 0 | Merge Queue Check | PR Check | Push Check |
+|-------------|-------|-------|-------|:-----------------:|:--------:|:----------:|
+| `0` | 0 | 0 | 0 | ✓ | ✓ | ✓ |
+| `1` | 0 | 0 | 1 | ✓ | ✓ | ✗ |
+| `2` | 0 | 1 | 0 | ✓ | ✗ | ✓ |
+| `3` | 0 | 1 | 1 | ✓ | ✗ | ✗ |
+| `4` | 1 | 0 | 0 | ✗ | ✓ | ✓ |
+| `5` | 1 | 0 | 1 | ✗ | ✓ | ✗ |
+| `6` | 1 | 1 | 0 | ✗ | ✗ | ✓ |
+| `7` | 1 | 1 | 1 | ✗ | ✗ | ✗ |
+| `8` | 0 | 0 | 0 | ✓ | ✓ | ✓ |
+| `9` | 0 | 0 | 1 | ✓ | ✓ | ✗ |
+| `a` | 0 | 1 | 0 | ✓ | ✗ | ✓ |
+| `b` | 0 | 1 | 1 | ✓ | ✗ | ✗ |
+| `c` | 1 | 0 | 0 | ✗ | ✓ | ✓ |
+| `d` | 1 | 0 | 1 | ✗ | ✓ | ✗ |
+| `e` | 1 | 1 | 0 | ✗ | ✗ | ✓ |
+| `f` | 1 | 1 | 1 | ✗ | ✗ | ✗ |
 
 ## How to configure branch protection
 
