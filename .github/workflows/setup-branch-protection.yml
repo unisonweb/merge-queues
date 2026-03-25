@@ -1,0 +1,99 @@
+name: Setup Branch Protection
+
+# Run this workflow once after initial repository setup to configure
+# "Merge Queue Check" as a required status check for the merge queue.
+#
+# Without this configuration the merge-queue CI job will run and can
+# report a failure, but GitHub will still merge the PR because the
+# check is not marked as required.  This workflow registers it as
+# required so that a failing Merge Queue Check actually blocks the merge.
+#
+# Trigger manually from Actions → Setup Branch Protection → Run workflow.
+#
+# Token requirements
+# ------------------
+# Updating branch protection requires admin access to the repository.
+# The default GITHUB_TOKEN may lack that permission depending on your
+# repository's settings.  If the step fails with a 403, create a
+# Personal Access Token (classic) with the `repo` scope (or a fine-grained
+# PAT with "Administration" repository permission set to "Read and write"),
+# store it as the repository secret ADMIN_PAT, and re-run the workflow.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  administration: write
+
+jobs:
+  configure:
+    name: Configure Branch Protection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require Merge Queue Check for the merge queue
+        uses: actions/github-script@v7
+        with:
+          # Fall back to ADMIN_PAT when the default token lacks admin rights.
+          github-token: ${{ secrets.ADMIN_PAT || secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const branch = 'main';
+
+            // Fetch current protection so we preserve existing settings
+            // (e.g. required reviews, restrictions) and only change the
+            // required status checks.
+            let current = {};
+            try {
+              const { data } = await github.rest.repos.getBranchProtection({
+                owner, repo, branch,
+              });
+              current = data;
+            } catch (err) {
+              if (err.status === 404) {
+                console.log('No existing branch protection found; creating a new rule.');
+              } else {
+                throw new Error(
+                  `Failed to fetch branch protection (HTTP ${err.status}): ${err.message}`
+                );
+              }
+            }
+
+            const existingChecks =
+              current.required_status_checks?.checks ?? [];
+
+            // Required check names for this repository
+            const needed = ['Push Check', 'PR Check', 'Merge Queue Check'];
+
+            // Merge existing checks with the required ones, avoiding duplicates
+            const existingContexts = new Set(
+              existingChecks.map((c) => c.context)
+            );
+            const mergedChecks = [
+              ...existingChecks,
+              ...needed
+                .filter((name) => !existingContexts.has(name))
+                .map((name) => ({ context: name })),
+            ];
+
+            await github.rest.repos.updateBranchProtection({
+              owner,
+              repo,
+              branch,
+              required_status_checks: {
+                strict: current.required_status_checks?.strict ?? false,
+                checks: mergedChecks,
+              },
+              enforce_admins:
+                current.enforce_admins?.enabled ?? false,
+              required_pull_request_reviews:
+                current.required_pull_request_reviews ?? null,
+              restrictions: current.restrictions ?? null,
+            });
+
+            console.log(
+              'Branch protection updated. Required status checks: ' +
+              mergedChecks.map((c) => c.context).join(', ')
+            );
+

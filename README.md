@@ -49,8 +49,38 @@ To enforce all three checks on your base branch (e.g. `main`):
 3. Search for and add the following required checks:
    - `Push Check` — blocks a PR from being enqueued until the push check on the head branch passes.
    - `PR Check` — blocks a PR from being enqueued until the PR check passes.
+   - `Merge Queue Check` — blocks the actual merge if the check fails after the PR is enqueued.
 4. Enable **Require merge queue**.
-5. Still on the same branch-protection rule page, scroll to the **Merge queue** section and add `Merge Queue Check` as a required status check — this blocks the actual merge if the check fails after the PR is enqueued.
+
+> **Tip — automated setup:** instead of configuring branch protection by hand,
+> trigger the
+> [Setup Branch Protection](.github/workflows/setup-branch-protection.yml)
+> workflow from the **Actions** tab.  It calls the GitHub API to add all three
+> checks (`Push Check`, `PR Check`, `Merge Queue Check`) as required status
+> checks on `main`.  The default `GITHUB_TOKEN` may lack admin rights; if the
+> workflow step fails with a 403, create a PAT with `repo` scope (or a
+> fine-grained PAT with **Administration: Read and write** permission), save it
+> as a repository secret named `ADMIN_PAT`, and re-run the workflow.
+
+## Why does a failing Merge Queue Check not block the merge?
+
+If you see a PR merged even though the **Merge Queue Check** CI job failed,
+the most likely cause is that `Merge Queue Check` has not been added to the
+branch protection rule's list of required status checks.
+
+GitHub runs every job in the workflow, but it only *blocks* a merge for checks
+that are explicitly marked as **required**.  The merge-queue check job can exit
+with a non-zero status code and GitHub will still merge the PR if the check name
+(`Merge Queue Check`) is absent from the required-checks list.
+
+**How to verify the configuration is correct:**
+
+1. Go to **Settings → Branches** and open the protection rule for `main`.
+2. Under **Require status checks to pass before merging**, confirm that
+   `Merge Queue Check` (along with `Push Check` and `PR Check`) appears in
+   the required checks list.
+3. If it is missing, add it — or run the **Setup Branch Protection** workflow
+   from the **Actions** tab to add it automatically.
 
 ## How the merge queue flow works
 
