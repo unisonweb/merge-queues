@@ -1,0 +1,10 @@
+name: pr checks
+
+on:
+  pull_request:
+
+jobs:
+  required:
+    uses: ./.github/workflows/shared.yaml
+    with:
+      token: pr

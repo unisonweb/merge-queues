@@ -1,0 +1,10 @@
+name: push checks
+
+on:
+  push:
+
+jobs:
+  required:
+    uses: ./.github/workflows/shared.yaml
+    with:
+      token: push
