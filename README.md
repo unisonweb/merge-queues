@@ -51,7 +51,7 @@ To enforce all three checks on your base branch (e.g. `main`):
    - `Push Check` — blocks a PR from being enqueued until the push check on the head branch passes.
    - `PR Check` — blocks a PR from being enqueued until the PR check passes.
 4. Enable **Require merge queue**.
-5. In the merge queue settings, add `Merge Queue Check` as a required check — this blocks the actual merge if the check fails after the PR is enqueued.
+5. Still on the same branch-protection rule page, scroll to the **Merge queue** section and add `Merge Queue Check` as a required status check — this blocks the actual merge if the check fails after the PR is enqueued.
 
 ## How the merge queue flow works
 
