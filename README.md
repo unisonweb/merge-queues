@@ -10,36 +10,35 @@ This repository demonstrates how to use [GitHub Merge Queues](https://docs.githu
 
 | Stage | Event trigger | Job name | Passes when… |
 |-------|--------------|----------|--------------|
-| **(A) Push check** | `push` | `Push Check` | bit 0 of the last SHA nibble is **0** |
-| **(B) PR check** | `pull_request` | `PR Check` | bit 1 of the last SHA nibble is **0** |
-| **(C) Merge-queue check** | `merge_group` | `Merge Queue Check` | bit 2 of the last SHA nibble is **0** |
+| **(A) Push check** | `push` | `Push Check` | `push` is in the `checks` file |
+| **(B) PR check** | `pull_request` | `PR Check` | `pr` is in the `checks` file |
+| **(C) Merge-queue check** | `merge_group` | `Merge Queue Check` | `merge_queue` is in the `checks` file |
 
 All three jobs live in [`.github/workflows/required-checks.yml`](.github/workflows/required-checks.yml).
 
-Each check inspects a different bit of the last hexadecimal character of the commit SHA (`github.sha`), giving each check an independent ~50% chance of passing or failing on any given commit.  This lets you easily simulate mixed pass/fail outcomes across the three stages without needing to touch any source code.
+### Controlling pass/fail via the `checks` file
 
-### Pass/fail lookup table
+The [`checks`](checks) file at the repository root contains a space-separated list of tokens.
+Each check looks for its own token in that file:
 
-The last nibble of a SHA can be `0`–`f`.  The table below shows which checks pass (`✓`) or fail (`✗`) for each value:
+| Token | Controls |
+|-------|----------|
+| `push` | Push Check (A) |
+| `pr` | PR Check (B) |
+| `merge_queue` | Merge Queue Check (C) |
 
-| Last nibble | bit 2 | bit 1 | bit 0 | Merge Queue Check | PR Check | Push Check |
-|-------------|-------|-------|-------|:-----------------:|:--------:|:----------:|
-| `0` | 0 | 0 | 0 | ✓ | ✓ | ✓ |
-| `1` | 0 | 0 | 1 | ✓ | ✓ | ✗ |
-| `2` | 0 | 1 | 0 | ✓ | ✗ | ✓ |
-| `3` | 0 | 1 | 1 | ✓ | ✗ | ✗ |
-| `4` | 1 | 0 | 0 | ✗ | ✓ | ✓ |
-| `5` | 1 | 0 | 1 | ✗ | ✓ | ✗ |
-| `6` | 1 | 1 | 0 | ✗ | ✗ | ✓ |
-| `7` | 1 | 1 | 1 | ✗ | ✗ | ✗ |
-| `8` | 0 | 0 | 0 | ✓ | ✓ | ✓ |
-| `9` | 0 | 0 | 1 | ✓ | ✓ | ✗ |
-| `a` | 0 | 1 | 0 | ✓ | ✗ | ✓ |
-| `b` | 0 | 1 | 1 | ✓ | ✗ | ✗ |
-| `c` | 1 | 0 | 0 | ✗ | ✓ | ✓ |
-| `d` | 1 | 0 | 1 | ✗ | ✓ | ✗ |
-| `e` | 1 | 1 | 0 | ✗ | ✗ | ✓ |
-| `f` | 1 | 1 | 1 | ✗ | ✗ | ✗ |
+To make a check **pass**: ensure its token is present in the file.  
+To make a check **fail**: remove its token from the file and commit.
+
+**Example — all checks pass:**
+```
+push pr merge_queue
+```
+
+**Example — only Push Check and PR Check pass (Merge Queue Check fails):**
+```
+push pr
+```
 
 ## How to configure branch protection
 

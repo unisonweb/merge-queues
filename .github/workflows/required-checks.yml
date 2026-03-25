@@ -13,6 +13,15 @@ name: Required Checks
 #   (C) merge_group  — runs after a PR enters the merge queue, but before it is
 #                     merged.  If this check fails the PR is dequeued and the merge
 #                     is blocked.
+#
+# Pass/fail is controlled by the `checks` file in the repository root.
+# Each check looks for its own token in that file:
+#   push check      → looks for the word  "push"
+#   PR check        → looks for the word  "pr"
+#   merge-queue check → looks for the word "merge_queue"
+#
+# To make a check pass, ensure its token is present in the `checks` file.
+# To make a check fail, remove its token from the `checks` file.
 
 on:
   push:
@@ -25,7 +34,7 @@ permissions:
 jobs:
   # -----------------------------------------------------------------------
   # (A) Push check
-  # Passes when bit 0 of the last hex nibble of the commit SHA is 0.
+  # Passes when the word "push" appears in the `checks` file.
   # Runs on every push.  Add "Push Check" as a required status check in your
   # branch-protection rule to block enqueuing until this check passes.
   # -----------------------------------------------------------------------
@@ -37,20 +46,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run push check
         run: |
-          SHA="${{ github.sha }}"
-          LAST="${SHA: -1}"
-          BIT=$(( 16#$LAST & 1 ))
-          echo "SHA=$SHA  last_nibble=$LAST  bit_0=$BIT"
-          if [ "$BIT" -eq 0 ]; then
-            echo "Push check passed"
+          if grep -qw "push" checks; then
+            echo "Push check passed ('push' found in checks file)"
           else
-            echo "Push check failed (bit 0 of last SHA nibble is 1)"
+            echo "Push check failed ('push' not found in checks file)"
             exit 1
           fi
 
   # -----------------------------------------------------------------------
   # (B) Pull-request check
-  # Passes when bit 1 of the last hex nibble of the commit SHA is 0.
+  # Passes when the word "pr" appears in the `checks` file.
   # Runs when a PR is opened or updated.  Add "PR Check" as a required status
   # check in your branch-protection rule to block enqueuing until this passes.
   # -----------------------------------------------------------------------
@@ -62,20 +67,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run PR check
         run: |
-          SHA="${{ github.sha }}"
-          LAST="${SHA: -1}"
-          BIT=$(( 16#$LAST & 2 ))
-          echo "SHA=$SHA  last_nibble=$LAST  bit_1=$BIT"
-          if [ "$BIT" -eq 0 ]; then
-            echo "PR check passed"
+          if grep -qw "pr" checks; then
+            echo "PR check passed ('pr' found in checks file)"
           else
-            echo "PR check failed (bit 1 of last SHA nibble is 1)"
+            echo "PR check failed ('pr' not found in checks file)"
             exit 1
           fi
 
   # -----------------------------------------------------------------------
   # (C) Merge-queue check
-  # Passes when bit 2 of the last hex nibble of the commit SHA is 0.
+  # Passes when the word "merge_queue" appears in the `checks` file.
   # Runs after the PR is added to the merge queue (merge_group event).
   # Add "Merge Queue Check" as a required merge-queue check in your
   # branch-protection rule.  If this check fails the PR is removed from the
@@ -89,13 +90,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run merge-queue check
         run: |
-          SHA="${{ github.sha }}"
-          LAST="${SHA: -1}"
-          BIT=$(( 16#$LAST & 4 ))
-          echo "SHA=$SHA  last_nibble=$LAST  bit_2=$BIT"
-          if [ "$BIT" -eq 0 ]; then
-            echo "Merge queue check passed"
+          if grep -qw "merge_queue" checks; then
+            echo "Merge queue check passed ('merge_queue' found in checks file)"
           else
-            echo "Merge queue check failed (bit 2 of last SHA nibble is 1)"
+            echo "Merge queue check failed ('merge_queue' not found in checks file)"
             exit 1
           fi
