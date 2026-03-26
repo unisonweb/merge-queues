@@ -24,7 +24,7 @@ jobs:
     with:
       token: merge_group
 
-  required:
+  required-reusable:
     needs: [on-push, on-pr, on-merge-group]
     if: always()
     runs-on: ubuntu-latest
