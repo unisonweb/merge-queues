@@ -22,4 +22,3 @@ jobs:
         uses: ./.github/workflows/shared-composite
         with:
           token: merge_group
-    
