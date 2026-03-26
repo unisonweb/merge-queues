@@ -1,4 +1,4 @@
-name: required checks dispatcher
+name: required checks dispatcher (composite)
 
 on:
   push:
