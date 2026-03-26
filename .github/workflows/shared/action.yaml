@@ -10,6 +10,7 @@ runs:
     - name: Run check
       shell: bash
       run: |
+        echo "Branch: ${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
         if grep -qw "${{ inputs.token }}" checks; then
           echo "Check passed ('${{ inputs.token }}' found in checks file)"
         else

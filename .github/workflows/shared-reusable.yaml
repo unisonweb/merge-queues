@@ -1,0 +1,27 @@
+name: Shared Check (Reusable Workflow)
+
+on:
+  workflow_call:
+    inputs:
+      token:
+        description: "The word to look for in the checks file"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run check
+        run: |
+          echo "Branch: ${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          if grep -qw "${{ inputs.token }}" checks; then
+            echo "Check passed ('${{ inputs.token }}' found in checks file)"
+          else
+            echo "Check failed ('${{ inputs.token }}' not found in checks file)"
+            exit 1
+          fi
