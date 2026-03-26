@@ -1,4 +1,4 @@
-name: Shareds Check
+name: Shared Check
 
 on:
   workflow_call:
