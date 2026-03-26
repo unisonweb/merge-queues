@@ -9,7 +9,6 @@ jobs:
   required-composite:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - if: github.event_name == 'push'
         uses: ./.github/workflows/shared-composite
         with:
