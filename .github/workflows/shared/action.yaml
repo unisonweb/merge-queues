@@ -1,27 +1,18 @@
 name: Shared Check
-
-on:
-  workflow_call:
-    inputs:
-      token:
-        description: "The word to look for in the checks file"
-        required: true
-        type: string
-
-permissions:
-  contents: read
-
-jobs:
-  shared:
-    name: Shared Checks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run check
-        run: |
-          if grep -qw "${{ inputs.token }}" checks; then
-            echo "Check passed ('${{ inputs.token }}' found in checks file)"
-          else
-            echo "Check failed ('${{ inputs.token }}' not found in checks file)"
-            exit 1
-          fi
+description: "Check for a token in the checks file"
+inputs:
+  token:
+    description: "The word to look for in the checks file"
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Run check
+      shell: bash
+      run: |
+        if grep -qw "${{ inputs.token }}" checks; then
+          echo "Check passed ('${{ inputs.token }}' found in checks file)"
+        else
+          echo "Check failed ('${{ inputs.token }}' not found in checks file)"
+          exit 1
+        fi
