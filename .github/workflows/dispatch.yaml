@@ -1,0 +1,25 @@
+name: required checks dispatcher
+
+on:
+  push:
+  pull_request:
+  merge_group:
+
+jobs:
+  required:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - if: github.event_name == 'push'
+        uses: ./.github/workflows/shared.yaml
+        with:
+          token: push
+      - if: github.event_name == 'pull_request'
+        uses: ./.github/workflows/shared.yaml
+        with:
+          token: pr
+      - if: github.event_name == 'merge_group'
+        uses: ./.github/workflows/shared.yaml
+        with:
+          token: merge_group
+    
