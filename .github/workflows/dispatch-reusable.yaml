@@ -1,0 +1,38 @@
+name: required checks dispatcher (reusable workflow)
+
+on:
+  push:
+  pull_request:
+  merge_group:
+
+jobs:
+  on-push:
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/shared-reusable.yaml
+    with:
+      token: push
+
+  on-pr:
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/shared-reusable.yaml
+    with:
+      token: pr
+
+  on-merge-group:
+    if: github.event_name == 'merge_group'
+    uses: ./.github/workflows/shared-reusable.yaml
+    with:
+      token: merge_group
+
+  required-reusable:
+    needs: [on-push, on-pr, on-merge-group]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check results
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "A required check failed"
+            exit 1
+          fi
+          echo "All required checks passed"

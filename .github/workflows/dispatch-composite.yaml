@@ -1,0 +1,24 @@
+name: required checks dispatcher (composite)
+
+on:
+  push:
+  pull_request:
+  merge_group:
+
+jobs:
+  required-composite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - if: github.event_name == 'push'
+        uses: ./.github/workflows/shared-composite
+        with:
+          token: push
+      - if: github.event_name == 'pull_request'
+        uses: ./.github/workflows/shared-composite
+        with:
+          token: pr
+      - if: github.event_name == 'merge_group'
+        uses: ./.github/workflows/shared-composite
+        with:
+          token: merge_group
