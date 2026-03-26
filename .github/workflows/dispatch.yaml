@@ -11,15 +11,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - if: github.event_name == 'push'
-        uses: ./.github/workflows/shared.yaml
+        uses: ./.github/workflows/shared
         with:
           token: push
       - if: github.event_name == 'pull_request'
-        uses: ./.github/workflows/shared.yaml
+        uses: ./.github/workflows/shared
         with:
           token: pr
       - if: github.event_name == 'merge_group'
-        uses: ./.github/workflows/shared.yaml
+        uses: ./.github/workflows/shared
         with:
           token: merge_group
     
